@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusHealth ERP | Automação & Integração Hospitalar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row">
+
+  <!-- Barra Lateral Fixa -->
+  <aside class="w-full lg:w-64 bg-slate-900 text-slate-100 flex-shrink-0 flex flex-col justify-between">
+    <div>
+      <!-- Cabeçalho da Marca -->
+      <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400">
+          <i class="fa-solid fa-heart-pulse text-lg"></i>
+        </div>
+        <div>
+          <span class="font-bold text-base tracking-tight block leading-tight">NexusHealth</span>
+          <span class="text-xs text-slate-400">Eng. de Software • HIS/ERP</span>
+        </div>
+      </div>
+
+      <!-- Navegação entre Seções -->
+      <nav class="p-3 space-y-1 text-sm">
+        <a href="#dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-cyan-500/15 text-cyan-300 font-medium">
+          <i class="fa-solid fa-gauge-high w-4 text-center"></i>
+          <span>Visão Geral & Integração</span>
+        </a>
+        <a href="#leitos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition">
+          <i class="fa-solid fa-bed-pulse w-4 text-center"></i>
+          <span>Gestão de Leitos</span>
+        </a>
+        <a href="#triagem" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition">
+          <i class="fa-solid fa-stethoscope w-4 text-center"></i>
+          <span>Triagem & Atendimento</span>
+        </a>
+        <a href="#farmacia" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition">
+          <i class="fa-solid fa-pills w-4 text-center"></i>
+          <span>Farmácia & Suprimentos</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Status do Ambiente no VS Code -->
+    <div class="p-4 m-3 rounded-xl bg-slate-800/80 border border-slate-700/70 text-xs">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-slate-400 font-medium">Barramento HL7/FHIR</span>
+        <span class="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Online
+        </span>
+      </div>
+      <p class="text-slate-400 leading-relaxed">
+        Ambiente local pronto para simulação de eventos e integrações operacionais.
+      </p>
+    </div>
+  </aside>
+
+  <!-- Conteúdo Principal -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Barra Superior -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20">
+      <div>
+        <h1 class="text-lg sm:text-xl font-bold text-slate-900">
+          Central Operacional Hospitalar
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500">
+          Automação de fluxos clínicos, ocupação de leitos e integração de dados em tempo real
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          id="btnSimularEvento"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium transition shadow-sm cursor-pointer"
+        >
+          <i class="fa-solid fa-bolt"></i>
+          <span>Simular Evento Operacional</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Área de Conteúdo -->
+    <main class="p-6 space-y-8 max-w-7xl w-full mx-auto">
+
+      <!-- SEÇÃO 1: DASHBOARD & INTEGRAÇÃO -->
+      <section id="dashboard" class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- KPI 1 -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Taxa de Ocupação</span>
+              <i class="fa-solid fa-bed text-cyan-600 text-base"></i>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span id="kpiOcupacao" class="text-2xl font-bold text-slate-900">0%</span>
+              <span id="kpiLeitosDetalhe" class="text-xs text-slate-500">0/0 leitos</span>
+            </div>
+          </div>
+
+          <!-- KPI 2 -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Fila de Triagem</span>
+              <i class="fa-solid fa-user-clock text-amber-500 text-base"></i>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span id="kpiFila" class="text-2xl font-bold text-slate-900">0</span>
+              <span class="text-xs text-slate-500">pacientes aguardando</span>
+            </div>
+          </div>
+
+          <!-- KPI 3 -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Itens Críticos (Farmácia)</span>
+              <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span id="kpiEstoqueCritico" class="text-2xl font-bold text-slate-900">0</span>
+              <span class="text-xs text-slate-500">abaixo do ponto de pedido</span>
+            </div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Mensagens Integradas</span>
+              <i class="fa-solid fa-arrows-rotate text-emerald-600 text-base"></i>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span id="kpiMensagens" class="text-2xl font-bold text-slate-900">148</span>
+              <span class="text-xs text-emerald-600 font-medium">99.8% sucesso</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conectores & Log de Integração -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Conectores -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h2 class="font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-plug text-cyan-600"></i>
+              Sistemas Integrados
+            </h2>
+
+            <div class="space-y-3 text-sm">
+              <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-slate-800">LIS Laboratorial</p>
+                  <p class="text-xs text-slate-500">Resultados de exames via HL7 v2.5</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Ativo</span>
+              </div>
+
+              <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-slate-800">ERP Suprimentos & Compras</p>
+                  <p class="text-xs text-slate-500">Reposição automática de insumos</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Ativo</span>
+              </div>
+
+              <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-slate-800">PACS Imagem Médica</p>
+                  <p class="text-xs text-slate-500">Sincronização DICOM / FHIR</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Ativo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console de Eventos -->
+          <div class="lg:col-span-2 bg-slate-950 text-slate-200 p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-terminal text-cyan-400 text-sm"></i>
+                <h2 class="font-bold text-sm text-white">Log de Automação e Integração de Dados</h2>
+              </div>
+              <button id="btnLimparLog" class="text-xs text-slate-400 hover:text-white cursor-pointer">
+                Limpar log
+              </button>
+            </div>
+            <div id="logConsole" class="font-mono-code text-xs space-y-2 overflow-y-auto max-h-60 pr-1"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO 2: GESTÃO DE LEITOS -->
+      <section id="leitos" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Gestão Automatizada de Leitos</h2>
+            <p class="text-sm text-slate-500">
+              Ao registrar alta médica, o sistema abre automaticamente a solicitação de higienização.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filtroAla" class="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+              <option value="TODAS">Todas as Alas</option>
+              <option value="UTI Geral">UTI Geral</option>
+              <option value="Clínica Médica">Clínica Médica</option>
+              <option value="Pronto Socorro">Pronto Socorro</option>
+            </select>
+
+            <select id="filtroStatusLeito" class="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+              <option value="TODOS">Todos os Status</option>
+              <option value="Disponível">Disponível</option>
+              <option value="Ocupado">Ocupado</option>
+              <option value="Higienização">Higienização</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="gridLeitos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- SEÇÃO 3: TRIAGEM E ATENDIMENTO -->
+      <section id="triagem" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Triagem Inteligente & Fila de Atendimento</h2>
+          <p class="text-sm text-slate-500">
+            Priorização automática por gravidade clínica (Protocolo de Manchester simplificado).
+          </p>
+        </div>
+
+        <form id="formTriagem" class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <input
+            type="text"
+            id="nomePaciente"
+            placeholder="Nome do paciente"
+            required
+            class="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+          />
+          <input
+            type="text"
+            id="queixaPaciente"
+            placeholder="Queixa principal / sintoma"
+            required
+            class="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+          />
+          <select id="prioridadePaciente" class="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+            <option value="1">Emergência (Vermelho)</option>
+            <option value="2">Muito Urgente (Laranja)</option>
+            <option value="3" selected>Urgente (Amarelo)</option>
+            <option value="4">Pouco Urgente (Verde)</option>
+          </select>
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition cursor-pointer"
+          >
+            <i class="fa-solid fa-plus mr-1.5"></i> Adicionar à Fila
+          </button>
+        </form>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase">
+                <th class="py-3 px-3">Classificação</th>
+                <th class="py-3 px-3">Paciente</th>
+                <th class="py-3 px-3">Queixa Principal</th>
+                <th class="py-3 px-3">Chegada</th>
+                <th class="py-3 px-3 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaTriagem" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SEÇÃO 4: FARMÁCIA & SUPRIMENTOS -->
+      <section id="farmacia" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Automação de Farmácia & Suprimentos</h2>
+            <p class="text-sm text-slate-500">
+              Monitoramento de estoque mínimo e geração automática de ordens de reposição.
+            </p>
+          </div>
+          <button
+            id="btnReporTodos"
+            class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition cursor-pointer"
+          >
+            <i class="fa-solid fa-boxes-stacked mr-1.5"></i> Repor Itens Críticos
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase">
+                <th class="py-3 px-3">Insumo / Medicamento</th>
+                <th class="py-3 px-3">Estoque Atual</th>
+                <th class="py-3 px-3">Ponto de Pedido</th>
+                <th class="py-3 px-3">Status</th>
+                <th class="py-3 px-3 text-right">Reposição</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaEstoque" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // Estado inicial da aplicação
+    const estado = {
+      mensagensIntegradas: 148,
+      leitos: [
+        { codigo: 'UTI-01', ala: 'UTI Geral', status: 'Ocupado', paciente: 'Carlos Eduardo Silva' },
+        { codigo: 'UTI-02', ala: 'UTI Geral', status: 'Disponível', paciente: null },
+        { codigo: 'UTI-03', ala: 'UTI Geral', status: 'Higienização', paciente: null },
+        { codigo: 'CM-101', ala: 'Clínica Médica', status: 'Ocupado', paciente: 'Mariana Souza Lima' },
+        { codigo: 'CM-102', ala: 'Clínica Médica', status: 'Disponível', paciente: null },
+        { codigo: 'PS-04', ala: 'Pronto Socorro', status: 'Ocupado', paciente: 'Rafael Almeida' }
+      ],
+      filaTriagem: [
+        { id: 1, nome: 'Ana Beatriz Costa', queixa: 'Dor torácica intensa', prioridade: 2, hora: '09:32' },
+        { id: 2, nome: 'João Pedro Martins', queixa: 'Febre alta e dor de garganta', prioridade: 3, hora: '09:40' },
+        { id: 3, nome: 'Luciana Ferreira', queixa: 'Entorse leve no tornozelo', prioridade: 4, hora: '09:45' }
+      ],
+      estoque: [
+        { id: 1, item: 'Soro Fisiológico 0,9% (500ml)', atual: 28, minimo: 50, lotePadrao: 120 },
+        { id: 2, item: 'Dipirona Sódica Injetável (2ml)', atual: 18, minimo: 40, lotePadrao: 100 },
+        { id: 3, item: 'Luva Cirúrgica Estéril Tam. M (Caixa)', atual: 75, minimo: 30, lotePadrao: 80 },
+        { id: 4, item: 'Equipo Macrogotas Estéril', atual: 14, minimo: 35, lotePadrao: 90 }
+      ]
+    };
+
+    const prioridadesMeta = {
+      1: { label: 'Emergência', badge: 'bg-rose-100 text-rose-800 border-rose-200' },
+      2: { label: 'Muito Urgente', badge: 'bg-orange-100 text-orange-800 border-orange-200' },
+      3: { label: 'Urgente', badge: 'bg-amber-100 text-amber-800 border-amber-200' },
+      4: { label: 'Pouco Urgente', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+    };
+
+    function horaAtual() {
+      return new Date().toLocaleTimeString('pt-BR', { hour12: false });
+    }
+
+    function registrarLog(sistema, mensagem, tipo = 'info') {
+      const logConsole = document.getElementById('logConsole');
+      estado.mensagensIntegradas += 1;
+
+      const cores = {
+        info: 'text-cyan-400',
+        sucesso: 'text-emerald-400',
+        alerta: 'text-amber-400'
+      };
+
+      const linha = document.createElement('div');
+      linha.innerHTML = `<span class="text-slate-500">[${horaAtual()}]</span> <span class="${cores[tipo] || 'text-cyan-400'} font-semibold">[${sistema}]</span> ${mensagem}`;
+      logConsole.prepend(linha);
+
+      atualizarKPIs();
+    }
+
+    function atualizarKPIs() {
+      const totalLeitos = estado.leitos.length;
+      const ocupados = estado.leitos.filter(l => l.status === 'Ocupado').length;
+      const taxa = totalLeitos ? Math.round((ocupados / totalLeitos) * 100) : 0;
+
+      const criticos = estado.estoque.filter(i => i.atual < i.minimo).length;
+
+      document.getElementById('kpiOcupacao').textContent = `${taxa}%`;
+      document.getElementById('kpiLeitosDetalhe').textContent = `${ocupados}/${totalLeitos} leitos`;
+      document.getElementById('kpiFila').textContent = estado.filaTriagem.length;
+      document.getElementById('kpiEstoqueCritico').textContent = criticos;
+      document.getElementById('kpiMensagens').textContent = estado.mensagensIntegradas;
+    }
+
+    function renderizarLeitos() {
+      const alaSelecionada = document.getElementById('filtroAla').value;
+      const statusSelecionado = document.getElementById('filtroStatusLeito').value;
+      const container = document.getElementById('gridLeitos');
+
+      const filtrados = estado.leitos.filter(leito => {
+        const matchAla = alaSelecionada === 'TODAS' || leito.ala === alaSelecionada;
+        const matchStatus = statusSelecionado === 'TODOS' || leito.status === statusSelecionado;
+        return matchAla && matchStatus;
+      });
+
+      if (!filtrados.length) {
+        container.innerHTML = `<p class="col-span-full text-sm text-slate-500 py-6 text-center">Nenhum leito encontrado com os filtros selecionados.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtrados.map(leito => {
+        let badgeClass = 'bg-emerald-100 text-emerald-700';
+        let acaoHtml = `
+          <button onclick="internarPaciente('${leito.codigo}')" class="w-full py-2 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition cursor-pointer">
+            Internar Paciente
+          </button>
+        `;
+
+        if (leito.status === 'Ocupado') {
+          badgeClass = 'bg-rose-100 text-rose-700';
+          acaoHtml = `
+            <button onclick="darAltaLeito('${leito.codigo}')" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition cursor-pointer">
+              Registrar Alta & Acionar Limpeza
+            </button>
+          `;
+        } else if (leito.status === 'Higienização') {
+          badgeClass = 'bg-amber-100 text-amber-800';
+          acaoHtml = `
+            <button onclick="concluirHigienizacao('${leito.codigo}')" class="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition cursor-pointer">
+              Concluir Higienização
+            </button>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col justify-between gap-4">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-slate-900">${leito.codigo}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${badgeClass}">${leito.status}</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-2">${leito.ala}</p>
+              <p class="text-sm text-slate-700 font-medium">
+                ${leito.paciente ? `<i class="fa-solid fa-user text-slate-400 mr-1.5"></i>${leito.paciente}` : '<span class="text-slate-400 italic">Sem paciente alocado</span>'}
+              </p>
+            </div>
+            <div>${acaoHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function internarPaciente(codigo) {
+      const nome = prompt(`Informe o nome do paciente para internação no leito ${codigo}:`);
+      if (!nome || !nome.trim()) return;
+
+      const leito = estado.leitos.find(l => l.codigo === codigo);
+      leito.status = 'Ocupado';
+      leito.paciente = nome.trim();
+
+      registrarLog('ADT/HL7', `Paciente "${leito.paciente}" internado no leito ${leito.codigo} (${leito.ala}).`, 'sucesso');
+      renderizarLeitos();
+      atualizarKPIs();
+    }
+
+    function darAltaLeito(codigo) {
+      const leito = estado.leitos.find(l => l.codigo === codigo);
+      const exPaciente = leito.paciente;
+      leito.paciente = null;
+      leito.status = 'Higienização';
+
+      registrarLog('HOTELARIA-RPA', `Alta de "${exPaciente}" no leito ${codigo}. Ordem de higienização disparada automaticamente.`, 'alerta');
+      renderizarLeitos();
+      atualizarKPIs();
+    }
+
+    function concluirHigienizacao(codigo) {
+      const leito = estado.leitos.find(l => l.codigo === codigo);
+      leito.status = 'Disponível';
+
+      registrarLog('LEITOS-API', `Higienização concluída no leito ${codigo}. Leito liberado para nova internação.`, 'sucesso');
+      renderizarLeitos();
+      atualizarKPIs();
+    }
+
+    function renderizarTriagem() {
+      const tbody = document.getElementById('tabelaTriagem');
+      const ordenada = [...estado.filaTriagem].sort((a, b) => a.prioridade - b.prioridade);
+
+      if (!ordenada.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Nenhum paciente na fila de triagem.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = ordenada.map(p => {
+        const meta = prioridadesMeta[p.prioridade];
+        return `
+          <tr>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold border ${meta.badge}">${meta.label}</span>
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-900">${p.nome}</td>
+            <td class="py-3 px-3 text-slate-600">${p.queixa}</td>
+            <td class="py-3 px-3 text-slate-500 font-mono-code text-xs">${p.hora}</td>
+            <td class="py-3 px-3 text-right">
+              <button onclick="chamarPaciente(${p.id})" class="px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-xs font-semibold transition cursor-pointer">
+                Chamar
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function chamarPaciente(id) {
+      const paciente = estado.filaTriagem.find(p => p.id === id);
+      estado.filaTriagem = estado.filaTriagem.filter(p => p.id !== id);
+
+      registrarLog('ATENDIMENTO', `Paciente "${paciente.nome}" (${prioridadesMeta[paciente.prioridade].label}) encaminhado ao consultório.`, 'info');
+      renderizarTriagem();
+      atualizarKPIs();
+    }
+
+    function renderizarEstoque() {
+      const tbody = document.getElementById('tabelaEstoque');
+
+      tbody.innerHTML = estado.estoque.map(item => {
+        const abaixo = item.atual < item.minimo;
+        return `
+          <tr>
+            <td class="py-3 px-3 font-medium text-slate-900">${item.item}</td>
+            <td class="py-3 px-3 font-mono-code">${item.atual} un</td>
+            <td class="py-3 px-3 font-mono-code text-slate-500">${item.minimo} un</td>
+            <td class="py-3 px-3">
+              ${abaixo
+                ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Crítico</span>'
+                : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Normal</span>'
+              }
+            </td>
+            <td class="py-3 px-3 text-right">
+              <button onclick="reporItem(${item.id})" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition cursor-pointer">
+                +${item.lotePadrao} un
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function reporItem(id) {
+      const item = estado.estoque.find(i => i.id === id);
+      item.atual += item.lotePadrao;
+
+      registrarLog('ERP-COMPRAS', `Ordem de reposição executada: +${item.lotePadrao} un de "${item.item}" (Total: ${item.atual} un).`, 'sucesso');
+      renderizarEstoque();
+      atualizarKPIs();
+    }
+
+    // Eventos de formulário e botões
+    document.getElementById('formTriagem').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nomePaciente').value.trim();
+      const queixa = document.getElementById('queixaPaciente').value.trim();
+      const prioridade = Number(document.getElementById('prioridadePaciente').value);
+
+      if (!nome || !queixa) return;
+
+      const novo = {
+        id: Date.now(),
+        nome,
+        queixa,
+        prioridade,
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      estado.filaTriagem.push(novo);
+      registrarLog('TRIAGEM-HIS', `"${nome}" classificado como ${prioridadesMeta[prioridade].label}.`, prioridade <= 2 ? 'alerta' : 'info');
+
+      e.target.reset();
+      document.getElementById('prioridadePaciente').value = '3';
+      renderizarTriagem();
+      atualizarKPIs();
+    });
+
+    document.getElementById('btnReporTodos').addEventListener('click', () => {
+      let repostos = 0;
+      estado.estoque.forEach(item => {
+        if (item.atual < item.minimo) {
+          item.atual += item.lotePadrao;
+          repostos += 1;
+        }
+      });
+
+      if (repostos > 0) {
+        registrarLog('ERP-COMPRAS', `Reposição automática concluída para ${repostos} item(ns) crítico(s).`, 'sucesso');
+      } else {
+        registrarLog('ERP-COMPRAS', 'Nenhum item abaixo do ponto de pedido no momento.', 'info');
+      }
+      renderizarEstoque();
+      atualizarKPIs();
+    });
+
+    document.getElementById('btnSimularEvento').addEventListener('click', () => {
+      const eventos = [
+        () => registrarLog('LIS-LAB', 'Hemograma completo sincronizado com prontuário do leito UTI-01.', 'sucesso'),
+        () => {
+          const alvo = estado.estoque.find(i => i.atual >= i.minimo);
+          if (alvo) {
+            alvo.atual = Math.max(5, alvo.atual - 20);
+            registrarLog('FARMACIA-DISP', `Dispensação de 20 un de "${alvo.item}" registrada. Saldo atual: ${alvo.atual} un.`, 'alerta');
+            renderizarEstoque();
+          }
+        },
+        () => registrarLog('PACS-IMAGEM', 'Laudo de tomografia recebido e vinculado ao fluxo assistencial.', 'info')
+      ];
+      const sorteado = eventos[Math.floor(Math.random() * eventos.length)];
+      sorteado();
+      atualizarKPIs();
+    });
+
+    document.getElementById('btnLimparLog').addEventListener('click', () => {
+      document.getElementById('logConsole').innerHTML = '';
+    });
+
+    document.getElementById('filtroAla').addEventListener('change', renderizarLeitos);
+    document.getElementById('filtroStatusLeito').addEventListener('change', renderizarLeitos);
+
+    // Inicialização
+    registrarLog('SYS-BOOT', 'Módulos HIS/ERP inicializados e conectados ao barramento de dados.', 'sucesso');
+    renderizarLeitos();
+    renderizarTriagem();
+    renderizarEstoque();
+    atualizarKPIs();
+  </script>
+</body>
+</html>
